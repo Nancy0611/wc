@@ -40,7 +40,7 @@ public class count {
 			}
 			System.out.println("字符数："+countChar+"\n词的数目："+countWord+"\n行数："+countLine);
 			br.close();
-		}
+		}//注释
 		
 		
 		/*ArrayList<File> ff = getFromFile_name("E:\\Nancy\\fruit\\model\\address\\index.php");
