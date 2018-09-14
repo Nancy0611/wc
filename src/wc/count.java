@@ -9,7 +9,6 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class count {
 	
 	static int countChar =0;//字符数
@@ -24,6 +23,7 @@ public class count {
 	private static String line;
 	private static BufferedReader br;
 	static boolean c=false,w=false,l=false,a=false;
+	private static ArrayList<File> file;
 	
 	public static void main(String[] args) throws IOException {
 		
@@ -38,11 +38,16 @@ public class count {
 			String[] comArray=commend.split(" ");
 			int comLength=comArray.length;
 			String File_name=comArray[comLength-1];//获取文件名
-			//System.out.println(File_name);
-			ArrayList<File> ff = getFromFile_name(File_name);
-			br=new BufferedReader(new FileReader(ff.get(0)));
+			ArrayList<File> ff = new ArrayList<File>();
+			getFromFile_name(File_name);
+		
+			for(File perfile:file){
+				br=new BufferedReader(new FileReader(perfile));
+				countData(br);
+				System.out.println(perfile.getName());
+			}
 			status(comArray,comLength);//修改cwl状态
-			display(br,c,w,l,a);//显示
+			display(c,w,l,a);//显示
 			br.close();
 		}
 		
@@ -51,7 +56,7 @@ public class count {
 	public static boolean checkInput(String input){//正则表达式校验输入命令行
 		boolean flag=false;
 		try{
-			String pattern="^wc\\s+(\\-[cwla]\\s+){1,3}\\s*\\S+$";
+			String pattern="^wc\\s+(\\-[cwlas]\\s+){1,5}\\s*\\S+$";
 			Pattern  regex=Pattern.compile(pattern);
 			Matcher matcher=regex.matcher(input);
 			flag=matcher.matches();
@@ -61,27 +66,29 @@ public class count {
 		return flag;
 	}
 	
-	public static ArrayList<File> getFromFile_name(String path){//文件名
+	public static ArrayList<File> getFromFile_name(String path){
 		File f=new File(path);
-		ArrayList<File> file=new ArrayList<File>();
+		file=new ArrayList<File>();
 		if(f.isFile()&&f.exists()){
 			file.add(f);
-		}else if(f.isDirectory()){//目录名
-			file=getFromDirection(path);
+		}else if(f.isDirectory()){
+			File[] files=f.listFiles();
+			for(File fis: files){
+				if(fis.isFile()){//文件
+					file.add(fis);
+				}else if(fis.isDirectory()){//目录 
+					//System.out.println(fis.getAbsolutePath());
+					getFromFile_name(fis.getAbsolutePath());
+				}
+			}
 		}
+//		for(File pp:file){
+//			System.out.println(pp.getName());
+//		}
 		return file;
 	}
 	
-	public static ArrayList<File> getFromDirection(String path){//目录名
-		File f=new File(path);
-		ArrayList<File> file=new ArrayList<File>();
-		if(f.isDirectory()){
-			
-		}
-		return file;
-	}
-	
-	public static void status(String[] comArray,int comLength){//修改cwl状态
+	public static void status(String[] comArray,int comLength){//修改cwla状态
 		for(int i=0;i<comLength;i++){
 			switch(comArray[i]){
 			case "-c": 
@@ -99,27 +106,26 @@ public class count {
 			case "-a":
 				a=true;
 				break;
-				
+			
 			default:
 				break;
 			}
 		}
 	}
 	
-	public static void display(BufferedReader br,boolean c,boolean w,boolean l,boolean a){
-		//统计部分
+	public static void countData(BufferedReader br){//计算部分
 		boolean comment=false;
 		try {
 			while((line=br.readLine())!=null){
-				countChar+=line.length();
-				countWord+=line.split(" ").length;
-				countLine++;
+				countChar+=line.length();//字符
+				countWord+=line.split(" ").length;//词
+				countLine++;//行数
 				line=line.trim();
-				if(line.matches("[\\s&&[^\\n]]*$")){
+				if(line.matches("[\\s&&[^\\n]]*$")){//空行
 					blankLine++;
 				}else if(line.equals("{")||line.equals("}")){
 					blankLine++;
-				}else if(line.startsWith("/*")&&!line.endsWith("*/")){
+				}else if(line.startsWith("/*")&&!line.endsWith("*/")){//注释行
 					commentLine++;
 					comment=true;
 				}else if(true==comment){
@@ -134,25 +140,30 @@ public class count {
 				}else if(line.startsWith("}//")){
 					commentLine++;
 				}else{
-					codeLine++;
+					codeLine++;//代码行
 				}
 			}
-			//选择显示部分
-			if(c){
-				System.out.println("字符数："+countChar);
-			}
-			if(w){
-				System.out.println("词的数目："+countWord);
-			}
-			if(l){
-				System.out.println("行数："+countLine);
-			}
-			if(a){
-				System.out.println("代码行："+codeLine+"\n空行:"+blankLine+"\n注释行:"+commentLine);
-			}
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+	}
+	
+	public static void display( boolean c,boolean w,boolean l,boolean a){
+		//选择显示部分
+		if(c){
+			System.out.println("字符数："+countChar);
+		}
+		if(w){
+			System.out.println("词的数目："+countWord);
+		}
+		if(l){
+			System.out.println("行数："+countLine);
+		}
+		if(a){
+			System.out.println("代码行："+codeLine+"\n空行:"+blankLine+"\n注释行:"+commentLine);
 		}
 	}
 }
